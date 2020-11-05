@@ -15,7 +15,7 @@ import pytorch_lightning as pl
 
 from models.inception_resnet_v1 import InceptionResnetV1
 
-from torch.optim.lr_scheduler import StepLR
+from torch.optim.lr_scheduler import StepLR, ReduceLROnPlateau
 
 class Attention(nn.Module):
     def __init__(self):
@@ -61,7 +61,7 @@ class GRU_ATT(pl.LightningModule):
         self.decoder = Attention()
             
 #          {'hap':0, 'sur':1, 'neu':2, 'fea':3, 'dis':4, 'ang':5, 'sad':6}
-        self.register_buffer("w", torch.Tensor([1.,1.,0.5,1.,1.,1.,0.75]))
+        self.register_buffer("w", torch.Tensor([1.,1.,0.5,1.,1.,1.,1.]))
         
             
     def forward(self, x):
@@ -104,11 +104,11 @@ class GRU_ATT(pl.LightningModule):
         self.log('val_acc', correct_count / all_count, prog_bar=True)
     
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
-        scheduler = StepLR(optimizer, step_size=20, gamma=0.1)
-        return [optimizer], [scheduler]
+        optimizer = torch.optim.SGD(self.parameters(), lr=1e-3, momentum=0.9, weight_decay=1e-4)
+#         optimizer = torch.optim.Adam(self.parameters(), lr=1e-4, weight_decay=1e-4)
+        scheduler = ReduceLROnPlateau(optimizer, 'max',verbose=True, patience=5, factor=0.5)
+        return {"optimizer": optimizer, "lr_scheduler": scheduler, "monitor": "val_acc"}
 #         optimizer = torch.optim.SGD(self.parameters(), lr=4e-6, momentum=0.9, weight_decay=1e-4)
-        return optimizer
                                                 
                                                 
                                                

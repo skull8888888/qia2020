@@ -23,21 +23,17 @@ import pandas as pd
 import warnings
 warnings.filterwarnings("ignore")
 
-# df = pd.read_csv('videoname_map.csv')
-# y_df = pd.read_csv('qia2020/train.csv')[:40000]
-# y_df = y_df.sample(10000, replace=True)
-
-# val_df = pd.read_csv('val_videoname_map.csv')
-# val_y_df = pd.read_csv('qia2020/val.csv')
-# val_y_df.sample(1000, replace=True)
-
 df = pd.read_csv('videoname_map.csv')
 y_df = pd.read_csv('qia2020/train.csv')
 
 val_df = pd.read_csv('val_videoname_map.csv')
 val_y_df = pd.read_csv('qia2020/val.csv')
 
-mtcnn = MTCNN(select_largest=True, post_process=True)
+# df = pd.read_csv('videoname_map.csv')
+# y_df = pd.read_csv('qia2020/train.csv')
+
+# val_df = pd.read_csv('val_videoname_map.csv')
+# val_y_df = pd.read_csv('qia2020/val.csv')
 
 class TorchVideoTrainDataset(data.Dataset):
     
@@ -68,32 +64,26 @@ class TorchVideoTrainDataset(data.Dataset):
         
         X = torch.load(self.torch_path + filename + '.pt')
         
-        if X.size(0) > 3:
-            X = X[:3,:,:,:]
-        
         y = torch.LongTensor([emo2index[self.y_df.Emotion.iloc[index]]])
         return (X, T) , y
 
 
-batch_size = 64
+batch_size = 90
 
 video_dataset = TorchVideoTrainDataset('torch_video_3/', 'qia2020/train/', df, y_df, 40000)
-train_loader = DataLoader(video_dataset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=4, pin_memory=True)
+train_loader = DataLoader(video_dataset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=8, pin_memory=True)
 
 val_video_dataset = TorchVideoTrainDataset('torch_video_3_val/', 'qia2020/val/', val_df, val_y_df, 5000)
-val_loader = DataLoader(val_video_dataset, batch_size=batch_size, shuffle=False, drop_last=True, num_workers=4, pin_memory=True)
-
-# val_video_dataset = VideoTrainDataset('../../../emotion/qia2020/val/', 'torch_video_val/', val_df, val_y_df)
-# val_loader = DataLoader(val_video_dataset, batch_size=batch_size, shuffle=False, drop_last=True, num_workers=8, pin_memory=True)
+val_loader = DataLoader(val_video_dataset, batch_size=batch_size, shuffle=False, drop_last=True, num_workers=8, pin_memory=True)
 
 
-checkpoint_dir = 'lightning_logs/version_5/checkpoints/epoch=10.ckpt'
+# checkpoint_dir = 'lightning_logs/version_39/checkpoints/epoch=1.ckpt'
 system = CRNN()
 
 seed_everything(42)
 
 # trainer = Trainer(gpus=[0], accelerator='ddp', resume_from_checkpoint=checkpoint_dir, deterministic=True, max_epochs=100)
-trainer = Trainer(gpus=[0], accelerator='ddp', max_epochs=100, deterministic=True)
+trainer = Trainer(gpus=[0], max_epochs=100, deterministic=True)
 trainer.fit(system, train_loader, val_loader)
 
 

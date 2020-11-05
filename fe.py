@@ -15,7 +15,7 @@ import pytorch_lightning as pl
 
 from models.inception_resnet_v1 import InceptionResnetV1
 
-from torch.optim.lr_scheduler import StepLR
+from torch.optim.lr_scheduler import StepLR, ReduceLROnPlateau
 
 class Flatten(nn.Module):
     def __init__(self):
@@ -40,7 +40,7 @@ class ResCNNEncoder(nn.Module):
 
         self.resnet = models.resnet18(pretrained=True)
         self.resnet.fc = nn.Linear(512, 512)
-        
+       
         self.linear = nn.Linear(512,7)
 
     def forward(self, x):
@@ -99,12 +99,11 @@ class FE(pl.LightningModule):
         self.log('val_acc', correct_count / all_count, prog_bar=True)
     
     def configure_optimizers(self):
-        optimizer = torch.optim.SGD(self.parameters(), lr=1e-6, momentum=0.9, weight_decay=1e-4)
-        scheduler = StepLR(optimizer, step_size=30, gamma=0.1)
-        return [optimizer], [scheduler]
-    
-#         optimizer = torch.optim.SGD(self.parameters(), lr=5e-4, momentum=0.9)
-#         return optimizer
+        optimizer = torch.optim.SGD(self.parameters(), lr=1e-3, momentum=0.9, weight_decay=1e-4)
+#         optimizer = torch.optim.Adam(self.parameters(), lr=1e-4, weight_decay=1e-4)
+        scheduler = ReduceLROnPlateau(optimizer, 'max',verbose=True, patience=5, factor=0.5)
+        return {"optimizer": optimizer, "lr_scheduler": scheduler, "monitor": "val_acc"}
+#         optimizer = torch.optim.SGD(self.parameters(), lr=4e-6, momentum=0.9, weight_decay=1e-4)
     
 
 
