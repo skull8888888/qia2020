@@ -26,7 +26,7 @@ class ResCNNEncoder(nn.Module):
         self.resnet = FE()
         
         if pretrained:
-            self.resnet.load_state_dict(torch.load('40k_clean_fe.pt'))
+            self.resnet.load_state_dict(torch.load('40k_3_fe.pt'))
         modules = list(self.resnet.children())[:-1] 
         self.resnet = nn.Sequential(*modules)
             
@@ -61,8 +61,8 @@ class Attention(nn.Module):
         self.gru = nn.GRU(hidden_size, hidden_size, batch_first=True)
         
         if pretrained:
-            self.gru.load_state_dict(torch.load('40k_clean_gru.pt'))
-            self.text_alpha.load_state_dict(torch.load('40k_clean_ta.pt'))
+            self.gru.load_state_dict(torch.load('40k_gru.pt'))
+            self.text_alpha.load_state_dict(torch.load('40k_ta.pt'))
 
     def attention(self, x, alpha):
 
@@ -169,12 +169,9 @@ class CRNN(pl.LightningModule):
         self.log('val_acc', correct_count / all_count, prog_bar=True)
     
     def configure_optimizers(self):
-#         optimizer = torch.optim.SGD(self.parameters(), lr=5e-5, momentum=0.9, weight_decay=1e-4)
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-4, weight_decay=1e-4)
-#         scheduler = StepLR(optimizer, step_size=30, gamma=0.1)
-#         return [optimizer], [scheduler]
-#         optimizer = torch.optim.SGD(self.parameters(), lr=4e-6, momentum=0.9, weight_decay=1e-4)
-        return optimizer
+        optimizer = torch.optim.SGD(self.parameters(), lr=5e-5, momentum=0.9, weight_decay=1e-4)
+        scheduler = StepLR(optimizer, step_size=30, gamma=0.1)
+        return [optimizer], [scheduler]
                                                 
                                                 
                                                
